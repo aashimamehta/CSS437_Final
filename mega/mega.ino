@@ -7,6 +7,7 @@ struct SensorData {
   int AQIData;
   float photoData;
   float USDistance;
+  int BPM;
 };
 
 // Define pins
@@ -17,7 +18,7 @@ const int buttonPin = 2;   // Arduino pin connected to button's pin
 const int ledPin = 5;       // Arduino pin connected to button's pin
 const int buzzerPin = 4;    // Arduino pin connected to button's pin
 const byte requestByte = 1;
-const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Distance: "};
+const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Distance: ", "BPM: "};
 
 
 int sensorToReport;
@@ -74,6 +75,7 @@ void loop() {
     Serial.println(sensorData.AQIData);
     Serial.println(sensorData.photoData);
     Serial.println(sensorData.USDistance);
+    Serial.println(sensorData.BPM);
   }
 
   if (sensorData.photoData < 500) {
@@ -118,6 +120,8 @@ void loop() {
     Serial.println(sensorData.photoData);
     Serial.print("Distance: ");
     Serial.println(sensorData.USDistance);
+    Serial.println("BPM: ");
+    Serial.println(sensorData.BPM);
 
     toReport = false;
   }
@@ -145,6 +149,9 @@ void displayDataOnLCD(int index) {
       break;
     case 2:
       lcd.print(sensorData.USDistance);
+      break;
+    case 3:
+      lcd.print(sensorData.BPM);
       break;
   }
 }
