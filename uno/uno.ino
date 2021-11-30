@@ -1,14 +1,19 @@
 /* Test sketch for Adafruit PM2.5 sensor with UART or I2C */
+#define USE_ARDUINO_INTERRUPTS true    // Set-up low-level interrupts for most acurate BPM math. HRS
+
 #include "Adafruit_PM25AQI.h"
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <PulseSensorPlayground.h> 
+
 
 // struct for data transfer between devices
 struct SensorData {
     int AQIData;
     float photoData;
     float USDistance;
+    int BPM;
 };
   
 RF24 radio(8, 9); // CE, CSN
@@ -26,6 +31,15 @@ SensorData sensorData;
 bool requestData = false;
 unsigned long lastCheckTime = 0; 
 
+int const PULSE_SENSOR_PIN = 1;   // 'S' Signal pin connected to A0
+PulseSensorPlayground pulseSensor;  // Creates an instance of the PulseSensorPlayground object called "pulseSensor"
+
+//  Variables for Pulse 
+const int PulseWire = 1;       // PulseSensor PURPLE WIRE connected to ANALOG PIN 0
+int Threshold = 550;           // Determine which Signal to "count as a beat" and which to ignore.
+                               // Use the "Gettting Started Project" to fine-tune Threshold Value beyond default setting.
+                               // Otherwise leave the default "550" value. 
+
 void setup() {
   // Wait for serial monitor to open
   Serial.begin(9600);
@@ -35,6 +49,9 @@ void setup() {
   
   pinMode(trigPin, OUTPUT);        // trig pin will have pulses output
   pinMode(echoPin, INPUT);         // echo pin should be input to get pulse width
+  pinMode(LED_BUILTIN,OUTPUT);  // Built-in LED will blink to your heartbeat
+  pulseSensor.analogInput(PulseWire);   
+  pulseSensor.setThreshold(Threshold);  
 
   radio.begin();
   radio.openWritingPipe(address);   //Setting the address at which we will receive the data
@@ -58,6 +75,8 @@ void loop() {
     Serial.println(sensorData.photoData);
     Serial.print("Distance: ");
     Serial.println(sensorData.USDistance);
+    Serial.print("BPM : ");
+    Serial.println(sensorData.BPM);
 
     requestData = false;
   } else {
@@ -80,6 +99,7 @@ void collectSensorData() {
   getAQISensor();
   getPhotoresistor();
   getUltrasonic();
+  getHeartRate();
 }
 
 void getAQISensor() {
@@ -91,28 +111,13 @@ void getAQISensor() {
 }
 
 void getPhotoresistor() {
-  //read the brightness of the ambient light
-  //Serial.println("Reading data for photoresistor now");
   photoresistor = analogRead(A0);   //set photoresistor to a number between 0 and 1023 based on how bright the ambient light is
-
-  //if the photoresistor value is below the threshold turn the light on, otherwise turn it off
-  if (photoresistor < threshold) {
-    //Serial.println("Its dark, therefore turning the LED on");
-    //sensorData.isDark = true;
-    //digitalWrite(4, HIGH);         // Turn on the LED
-  } else {
-    //Serial.println("Its bright, therefore turning the LED off");
-    //sensorData.isDark = false;
-    //digitalWrite(4, LOW);          // Turn off the LED
-  }
   sensorData.photoData = photoresistor;
 }
 
 void getUltrasonic() {
   // Duration will be the input pulse width and distance will be the distance to the obstacle in centimeters
   int duration, distance;
-  //Serial.println("Reading data from ultrasonic sensor now");
-  // Output pulse with 1ms width on trigPin
   digitalWrite(trigPin, HIGH);
   delay(5);
   digitalWrite(trigPin, LOW);
@@ -128,7 +133,15 @@ void getUltrasonic() {
     sensorData.USDistance = distance;
   } 
   else {
-    //Serial.println("Nothing is nearby");
     sensorData.USDistance = distance;
   }
+}
+
+void getHeartRate(){
+  int myBPM = pulseSensor.getBeatsPerMinute();  // Calls function on our pulseSensor object that returns BPM as an "int".
+                                               // "myBPM" hold this BPM value now. 
+  if (pulseSensor.sawStartOfBeat()) { 
+   sensorData.BPM = myBPM;                       // Print the value inside of myBPM.
+  }
+  delay(500);                    // considered best practice in a simple sketch.
 }
