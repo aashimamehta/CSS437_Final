@@ -6,7 +6,9 @@
 struct SensorData {
   int AQIData;
   float photoData;
-  float USDistance;
+  float USDistance1;
+  float USDistance2;
+  float USDistance3;
   int BPM;
 };
 
@@ -18,7 +20,7 @@ const int buttonPin = 2;   // Arduino pin connected to button's pin
 const int ledPin = 5;       // Arduino pin connected to button's pin
 const int buzzerPin = 4;    // Arduino pin connected to button's pin
 const byte requestByte = 1;
-const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Distance: ", "BPM: "};
+const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Distance1: ", "Distance2: ", "Distance3: ", "BPM: "};
 
 
 int sensorToReport;
@@ -74,7 +76,9 @@ void loop() {
 
     Serial.println(sensorData.AQIData);
     Serial.println(sensorData.photoData);
-    Serial.println(sensorData.USDistance);
+    Serial.println(sensorData.USDistance1);
+    Serial.println(sensorData.USDistance2);
+    Serial.println(sensorData.USDistance3);
     Serial.println(sensorData.BPM);
   }
 
@@ -119,7 +123,11 @@ void loop() {
     Serial.print("Photoresistor: ");
     Serial.println(sensorData.photoData);
     Serial.print("Distance: ");
-    Serial.println(sensorData.USDistance);
+    Serial.println(sensorData.USDistance1);
+    Serial.print("Distance: ");
+    Serial.println(sensorData.USDistance2);
+    Serial.print("Distance: ");
+    Serial.println(sensorData.USDistance3);
     Serial.println("BPM: ");
     Serial.println(sensorData.BPM);
 
@@ -148,9 +156,15 @@ void displayDataOnLCD(int index) {
       lcd.print(sensorData.photoData);
       break;
     case 2:
-      lcd.print(sensorData.USDistance);
+      lcd.print(sensorData.USDistance1);
       break;
     case 3:
+      lcd.print(sensorData.USDistance2);
+      break;
+    case 4:
+      lcd.print(sensorData.USDistance3);
+      break;
+    case 5:
       lcd.print(sensorData.BPM);
       break;
   }
