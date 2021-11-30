@@ -134,7 +134,7 @@ void getPhotoresistor() {
   sensorData.photoData = photoresistor;
 }
 
-void getUltrasonic(trigPin, echoPin, ultrasonicNum) {
+void getUltrasonic(int trigPin, int echoPin,int ultrasonicNum) {
   // Duration will be the input pulse width and distance will be the distance to the obstacle in centimeters
   int duration, distance;
   digitalWrite(trigPin, HIGH);

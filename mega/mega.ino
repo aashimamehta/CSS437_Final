@@ -94,11 +94,12 @@ void loop() {
     digitalWrite(ledPin, LOW);
   }
 
-  if (sensorData.USDistance < 50.0) {
+  if (sensorData.USDistance1 < 50.0) {
     isClose = true;
   } else {
     isClose = false;
   }
+
 
   if(isClose) {
     digitalWrite(buzzerPin, HIGH);
