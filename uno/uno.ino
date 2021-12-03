@@ -10,13 +10,14 @@
 
 // struct for data transfer between devices
 struct SensorData {
-    int AQIData;
-    float photoData;
-    float USDistance1;
-    float USDistance2;
-    float USDistance3;
-    int BPM;
+  int AQIData;
+  float photoData;
+  int BPM;
+  float USDistance_Front;
+  float USDistance_Left;
+  float USDistance_Right;
 };
+
   
 RF24 radio(8, 9); // CE, CSN
 const byte address[6] = "00001";
@@ -32,18 +33,17 @@ int const echoPin1 = 2;
 int const trigPin2 = 5;
 int const echoPin2 = 4;
 
-int const trigPin3 = 7;
-int const echoPin3 = 6;
+int const trigPin3 = 6;
+int const echoPin3 = 7;
 
 SensorData sensorData;
 bool requestData = false;
 unsigned long lastCheckTime = 0; 
 
-int const PULSE_SENSOR_PIN = 1;   // 'S' Signal pin connected to A0
 PulseSensorPlayground pulseSensor;  // Creates an instance of the PulseSensorPlayground object called "pulseSensor"
 
 //  Variables for Pulse 
-const int PulseWire = 1;       // PulseSensor PURPLE WIRE connected to ANALOG PIN 0
+const int PulseWire = 1;       // PulseSensor PURPLE WIRE connected to ANALOG PIN 1
 int Threshold = 550;           // Determine which Signal to "count as a beat" and which to ignore.
                                // Use the "Gettting Started Project" to fine-tune Threshold Value beyond default setting.
                                // Otherwise leave the default "550" value. 
@@ -55,13 +55,8 @@ void setup() {
   Serial.println("Adafruit PMSA003I Air Quality Sensor");
   delay(1000);
   
-  pinMode(trigPin1, OUTPUT);        // trig pin will have pulses output
-  pinMode(echoPin1, INPUT);         // echo pin should be input to get pulse width
-  pinMode(trigPin2, OUTPUT);        // trig pin will have pulses output
-  pinMode(echoPin2, INPUT);         // echo pin should be input to get pulse width
-  pinMode(trigPin3, OUTPUT);        // trig pin will have pulses output
-  pinMode(echoPin3, INPUT);         // echo pin should be input to get pulse width
-  
+  pinMode(trigPin, OUTPUT);        // trig pin will have pulses output
+  pinMode(echoPin, INPUT);         // echo pin should be input to get pulse width
   pinMode(LED_BUILTIN,OUTPUT);  // Built-in LED will blink to your heartbeat
   pulseSensor.analogInput(PulseWire);   
   pulseSensor.setThreshold(Threshold);  
@@ -74,26 +69,24 @@ void setup() {
 
 void loop() {
   if (requestData) {
-    //int tempint = 5;
     collectSensorData();
     if (!radio.write(&sensorData, sizeof(SensorData))) {
-    //if (!radio.write(&tempint, sizeof(SensorData))) {
-      Serial.print("failed");
+      Serial.println("failed to send data to mega...");
     } else {
-          Serial.println("data sent");
+      Serial.println("data sent.");
     }
     Serial.print("PM2.5: ");
     Serial.println(sensorData.AQIData);
     Serial.print("Photoresistor: ");
     Serial.println(sensorData.photoData);
-    Serial.print("Distance 1: ");
-    Serial.println(sensorData.USDistance1);
-    Serial.print("Distance 2: ");
-    Serial.println(sensorData.USDistance2);
-    Serial.print("Distance 3: ");
-    Serial.println(sensorData.USDistance3);
     Serial.print("BPM : ");
     Serial.println(sensorData.BPM);
+    Serial.print("Distance: ");
+    Serial.println(sensorData.USDistance_Front);
+    Serial.println(", ");
+    Serial.println(sensorData.USDistance_Left);
+    Serial.println(", ");
+    Serial.println(sensorData.USDistance_Right);
 
     requestData = false;
   } else {
@@ -115,10 +108,10 @@ void loop() {
 void collectSensorData() {
   getAQISensor();
   getPhotoresistor();
+  getHeartRate();
   getUltrasonic(trigPin1, echoPin1, 1);
   getUltrasonic(trigPin2, echoPin2, 2);
   getUltrasonic(trigPin3, echoPin3, 3);
-  getHeartRate();
 }
 
 void getAQISensor() {
@@ -134,7 +127,7 @@ void getPhotoresistor() {
   sensorData.photoData = photoresistor;
 }
 
-void getUltrasonic(int trigPin, int echoPin,int ultrasonicNum) {
+void getUltrasonic(int trigPin, int echoPin, int ultrasonicNum) {
   // Duration will be the input pulse width and distance will be the distance to the obstacle in centimeters
   int duration, distance;
   digitalWrite(trigPin, HIGH);
@@ -145,37 +138,16 @@ void getUltrasonic(int trigPin, int echoPin,int ultrasonicNum) {
   duration = pulseIn(echoPin, HIGH);
   // Distance is half the duration divided by 29.1 (from datasheet)
   distance = (duration/2) / 29.1;
-  
-  // if distance less than 0.5 meter and more than 0 (0 or less means over range)
-  if(ultrasonicNum == 1){
-    if (distance <= 10 && distance >= 0) {
-      distance = duration*0.034/2;
-      sensorData.USDistance1 = distance;
-    } 
-    else {
-      sensorData.USDistance1 = distance;
-    }
+  distance = duration*0.034/2;
+
+  // record to the correct entry
+  if (ultrasonicNum == 1) {
+    sensorData.USDistance_Front = distance;
+  } else if (ultrasonicNum == 2) {
+    sensorData.USDistance_Left = distance;
+  } else {
+    sensorData.USDistance_Right = distance;
   }
-  else if(ultrasonicNum == 2){
-    if (distance <= 10 && distance >= 0) {
-      distance = duration*0.034/2;
-      sensorData.USDistance2 = distance;
-    } 
-    else {
-      sensorData.USDistance2 = distance;
-    }
-  }
-  else{
-    if (distance <= 10 && distance >= 0) {
-      distance = duration*0.034/2;
-      sensorData.USDistance3 = distance;
-    } 
-    else {
-      sensorData.USDistance3 = distance;
-    }
-  }
-  
-  
 }
 
 void getHeartRate(){
@@ -184,5 +156,4 @@ void getHeartRate(){
   if (pulseSensor.sawStartOfBeat()) { 
    sensorData.BPM = myBPM;                       // Print the value inside of myBPM.
   }
-  delay(500);                    // considered best practice in a simple sketch.
 }
