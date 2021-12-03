@@ -23,9 +23,9 @@ LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 const int buttonPin = 2;   // Arduino pin connected to button's pin
 const int ledPin = 5;       // Arduino pin connected to button's pin
 const int buzzerPin = 4;    // Arduino pin connected to button's pin
-const int Front_Motor_Pin = 22;
-const int Left_Motor_Pin = 24;
-const int Right_Motor_Pin = 26;
+const int FRONT_MOTOR_PIN = 44;
+const int LEFT_MOTOR_PIN = 46;
+const int RIGHT_MOTOR_PIN = 48;
 
 const byte requestByte = 1;
 const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Heart Rate: ", "Front Distance: ", "Left Distance: ", "Right Distance: "};
@@ -64,6 +64,9 @@ void setup() {
   radio.startListening();          //This sets the module as transmitter
   
   displayDataOnLCD(displayIndex);
+  pinMode(FRONT_MOTOR_PIN, OUTPUT); 
+  pinMode(RIGHT_MOTOR_PIN, OUTPUT); 
+  pinMode(LEFT_MOTOR_PIN, OUTPUT); 
 }
 
 void loop() {
@@ -77,7 +80,7 @@ void loop() {
     interrupts();
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(Requesting...);
+    lcd.print("Requesting...");
     delay(300);
     displayDataOnLCD(displayIndex);
   }
@@ -132,7 +135,7 @@ void loop() {
     digitalWrite(LEFT_MOTOR_PIN, HIGH);
   } else {
     leftIsClose = false;
-    digitalWrite(lEFT_MOTOR_PIN, LOW);
+    digitalWrite(LEFT_MOTOR_PIN, LOW);
   }
 
   if (sensorData.USDistance_Right < ALERT_DISTANCE) {
@@ -242,9 +245,4 @@ void buttonChange() {
     }
   }
   interrupts();
-}
-
-void vibrate(int motorIndex) { //0 for front, 1 for left, 2 for right
-  
-  
 }
