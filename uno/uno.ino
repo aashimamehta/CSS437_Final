@@ -39,12 +39,15 @@ int const echoPin3 = 7;
 SensorData sensorData;
 bool requestData = false;
 unsigned long lastCheckTime = 0; 
+unsigned long lastHeartBeat;
+
 
 PulseSensorPlayground pulseSensor;  // Creates an instance of the PulseSensorPlayground object called "pulseSensor"
 
 //  Variables for Pulse 
+
 const int PulseWire = 1;       // PulseSensor PURPLE WIRE connected to ANALOG PIN 1
-int Threshold = 550;           // Determine which Signal to "count as a beat" and which to ignore.
+int Threshold = 348;           // Determine which Signal to "count as a beat" and which to ignore.
                                // Use the "Gettting Started Project" to fine-tune Threshold Value beyond default setting.
                                // Otherwise leave the default "550" value. 
 
@@ -55,11 +58,18 @@ void setup() {
   Serial.println("Adafruit PMSA003I Air Quality Sensor");
   delay(1000);
   
-  pinMode(trigPin, OUTPUT);        // trig pin will have pulses output
-  pinMode(echoPin, INPUT);         // echo pin should be input to get pulse width
+  pinMode(trigPin1, OUTPUT);        // trig pin will have pulses output
+  pinMode(echoPin1, INPUT);         // echo pin should be input to get pulse width
+  pinMode(trigPin2, OUTPUT);        // trig pin will have pulses output
+  pinMode(echoPin2, INPUT);         // echo pin should be input to get pulse width
+  pinMode(trigPin3, OUTPUT);        // trig pin will have pulses output
+  pinMode(echoPin3, INPUT);         // echo pin should be input to get pulse width
   pinMode(LED_BUILTIN,OUTPUT);  // Built-in LED will blink to your heartbeat
   pulseSensor.analogInput(PulseWire);   
   pulseSensor.setThreshold(Threshold);  
+  if (pulseSensor.begin()) {
+    Serial.println("We created a pulseSensor Object !");  //This prints one time at Arduino power-up,  or on Arduino reset.  
+  }
 
   radio.begin();
   radio.openWritingPipe(address);   //Setting the address at which we will receive the data
@@ -68,6 +78,7 @@ void setup() {
 }
 
 void loop() {
+    getHeartRate();
   if (requestData) {
     collectSensorData();
     if (!radio.write(&sensorData, sizeof(SensorData))) {
@@ -82,10 +93,10 @@ void loop() {
     Serial.print("BPM : ");
     Serial.println(sensorData.BPM);
     Serial.print("Distance: ");
-    Serial.println(sensorData.USDistance_Front);
-    Serial.println(", ");
-    Serial.println(sensorData.USDistance_Left);
-    Serial.println(", ");
+    Serial.print(sensorData.USDistance_Front);
+    Serial.print(", ");
+    Serial.print(sensorData.USDistance_Left);
+    Serial.print(", ");
     Serial.println(sensorData.USDistance_Right);
 
     requestData = false;
@@ -108,7 +119,7 @@ void loop() {
 void collectSensorData() {
   getAQISensor();
   getPhotoresistor();
-  getHeartRate();
+  
   getUltrasonic(trigPin1, echoPin1, 1);
   getUltrasonic(trigPin2, echoPin2, 2);
   getUltrasonic(trigPin3, echoPin3, 3);
@@ -152,8 +163,25 @@ void getUltrasonic(int trigPin, int echoPin, int ultrasonicNum) {
 
 void getHeartRate(){
   int myBPM = pulseSensor.getBeatsPerMinute();  // Calls function on our pulseSensor object that returns BPM as an "int".
-                                               // "myBPM" hold this BPM value now. 
+  sensorData.BPM = myBPM;                                               // "myBPM" hold this BPM value now. 
   if (pulseSensor.sawStartOfBeat()) { 
    sensorData.BPM = myBPM;                       // Print the value inside of myBPM.
   }
 }
+
+/*void getHeartRate() {
+  int Signal = analogRead(PulseWire);
+  //Serial.println(Signal);
+  if (Signal > Threshold) {
+//    if (lastHeartBeat != 0) {
+//      long hbGap = millis() - lastHeartBeat;
+//      if (hbGap < 1200 && hbGap > 300) {
+//        sensorData.BPM = 60000 / hbGap;
+//        lastHeartBeat = millis();
+//      }
+      Serial.println(Signal);
+    } else {
+      lastHeartBeat = millis();
+    }
+  }
+}*/

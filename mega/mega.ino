@@ -2,14 +2,18 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 
+#define REQUEST_HOLD_TIME 1000    // hold down the button this many milliseconds to request data
+#define ALERT_DISTANCE 50.0         // distance when buzzer and vibration motor will go off
+
+
 // struct for data transfer between devices
 struct SensorData {
   int AQIData;
   float photoData;
-  float USDistance1;
-  float USDistance2;
-  float USDistance3;
   int BPM;
+  float USDistance_Front;
+  float USDistance_Left;
+  float USDistance_Right;
 };
 
 // Define pins
@@ -19,8 +23,12 @@ LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 const int buttonPin = 2;   // Arduino pin connected to button's pin
 const int ledPin = 5;       // Arduino pin connected to button's pin
 const int buzzerPin = 4;    // Arduino pin connected to button's pin
+const int Front_Motor_Pin = 22;
+const int Left_Motor_Pin = 24;
+const int Right_Motor_Pin = 26;
+
 const byte requestByte = 1;
-const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Distance1: ", "Distance2: ", "Distance3: ", "BPM: "};
+const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Heart Rate: ", "Front Distance: ", "Left Distance: ", "Right Distance: "};
 
 
 int sensorToReport;
@@ -35,6 +43,9 @@ bool buttonIsUp = true;
 bool indexChanged = false;
 bool isDark = false;
 bool isClose = false;
+bool frontIsClose = false;
+bool leftIsClose = false;
+bool rightIsClose = false;
 
 void setup() {
   Serial.begin(9600);
@@ -58,28 +69,40 @@ void setup() {
 void loop() {
 
 
-  if (toRequest) {
+  if (toRequest) {                          // request new data from peripheral
     Serial.println("requesting..");
     radio.write(&requestByte, sizeof(byte));
     noInterrupts();
     toRequest = false;
     interrupts();
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(Requesting...);
+    delay(300);
+    displayDataOnLCD(displayIndex);
   }
 
   // read sensor information from peripheral
   if (radio.available()) {
     //SensorData temp;
     //int tempint;
-
+    noInterrupts();
     radio.read(&sensorData, sizeof(SensorData));
+    interrupts();
     displayDataOnLCD(displayIndex);
 
+    Serial.print("PM2.5: ");
     Serial.println(sensorData.AQIData);
+    Serial.print("Photoresistor: ");
     Serial.println(sensorData.photoData);
-    Serial.println(sensorData.USDistance1);
-    Serial.println(sensorData.USDistance2);
-    Serial.println(sensorData.USDistance3);
+    Serial.print("BPM : ");
     Serial.println(sensorData.BPM);
+    Serial.print("Distance: ");
+    Serial.print(sensorData.USDistance_Front);
+    Serial.print(", ");
+    Serial.print(sensorData.USDistance_Left);
+    Serial.print(", ");
+    Serial.println(sensorData.USDistance_Right);
   }
 
   if (sensorData.photoData < 500) {
@@ -94,12 +117,38 @@ void loop() {
     digitalWrite(ledPin, LOW);
   }
 
-  if (sensorData.USDistance1 < 50.0) {
+  if (sensorData.USDistance_Front < ALERT_DISTANCE) {
     isClose = true;
+    frontIsClose = true;
+    digitalWrite(FRONT_MOTOR_PIN, HIGH);
   } else {
-    isClose = false;
+    frontIsClose = false;
+    digitalWrite(FRONT_MOTOR_PIN, LOW);
   }
 
+  if (sensorData.USDistance_Left < ALERT_DISTANCE) {
+    isClose = true;
+    leftIsClose = true;
+    digitalWrite(LEFT_MOTOR_PIN, HIGH);
+  } else {
+    leftIsClose = false;
+    digitalWrite(lEFT_MOTOR_PIN, LOW);
+  }
+
+  if (sensorData.USDistance_Right < ALERT_DISTANCE) {
+    isClose = true;
+    rightIsClose = true;
+    digitalWrite(RIGHT_MOTOR_PIN, HIGH);
+  } else {
+    rightIsClose = false;
+    digitalWrite(RIGHT_MOTOR_PIN, LOW);
+  }
+
+  if (!(frontIsClose || leftIsClose || rightIsClose)) {
+    isClose = false;
+  }
+  
+  
 
   if(isClose) {
     digitalWrite(buzzerPin, HIGH);
@@ -123,14 +172,16 @@ void loop() {
     Serial.println(sensorData.AQIData);
     Serial.print("Photoresistor: ");
     Serial.println(sensorData.photoData);
-    Serial.print("Distance: ");
-    Serial.println(sensorData.USDistance1);
-    Serial.print("Distance: ");
-    Serial.println(sensorData.USDistance2);
-    Serial.print("Distance: ");
-    Serial.println(sensorData.USDistance3);
-    Serial.println("BPM: ");
+    Serial.print("BPM: ");
     Serial.println(sensorData.BPM);
+
+    Serial.print("Front Distance: ");
+    Serial.println(sensorData.USDistance_Front);
+    Serial.print("Left Distance: ");
+    Serial.println(sensorData.USDistance_Left);
+    Serial.print("Right Distance: ");
+    Serial.println(sensorData.USDistance_Right);
+
 
     toReport = false;
   }
@@ -157,21 +208,19 @@ void displayDataOnLCD(int index) {
       lcd.print(sensorData.photoData);
       break;
     case 2:
-      lcd.print(sensorData.USDistance1);
+      lcd.print(sensorData.BPM);
       break;
     case 3:
-      lcd.print(sensorData.USDistance2);
+      lcd.print(sensorData.USDistance_Front);
       break;
     case 4:
-      lcd.print(sensorData.USDistance3);
+      lcd.print(sensorData.USDistance_Left);
       break;
     case 5:
-      lcd.print(sensorData.BPM);
+      lcd.print(sensorData.USDistance_Right);
       break;
   }
 }
-
-
 
 void buttonChange() {
   noInterrupts();
@@ -182,15 +231,20 @@ void buttonChange() {
     buttonClick = true;
     buttonIsUp = true;
     long buttonDuration = millis() - buttonDownTime;
-    if (buttonDuration >= 1000) {
+    if (buttonDuration >= REQUEST_HOLD_TIME) {
       toRequest = true;
     } else {
       ++displayIndex;
-      if (displayIndex > 2) {
+      if (displayIndex > 5) {
         displayIndex = 0;
       }
       indexChanged = true;
     }
   }
   interrupts();
+}
+
+void vibrate(int motorIndex) { //0 for front, 1 for left, 2 for right
+  
+  
 }
