@@ -1,18 +1,19 @@
 /* Test sketch for Adafruit PM2.5 sensor with UART or I2C */
 #define USE_ARDUINO_INTERRUPTS true    // Set-up low-level interrupts for most acurate BPM math. HRS
 
-#include "Adafruit_PM25AQI.h"
+//#include "Adafruit_PM25AQI.h"
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include <PulseSensorPlayground.h> 
+#include <PulseSensorPlayground.h>
+#include <math.h>         //loads the more advanced math functions
 
 
 // struct for data transfer between devices
 struct SensorData {
-  int AQIData;
   float photoData;
   int BPM;
+  float temperatureData;
   float USDistance_Front;
   float USDistance_Left;
   float USDistance_Right;
@@ -22,7 +23,6 @@ struct SensorData {
 RF24 radio(8, 9); // CE, CSN
 const byte address[6] = "00001";
 
-Adafruit_PM25AQI aqi = Adafruit_PM25AQI();
 int photoresistor = 0;              //this variable will hold a value based on the brightness of the ambient light
 int threshold = 500;                //if the photoresistor reading is below this value the the light will turn on
 
@@ -54,9 +54,6 @@ int Threshold = 348;           // Determine which Signal to "count as a beat" an
 void setup() {
   // Wait for serial monitor to open
   Serial.begin(9600);
-  while (!Serial) delay(10);
-  Serial.println("Adafruit PMSA003I Air Quality Sensor");
-  delay(1000);
   
   pinMode(trigPin1, OUTPUT);        // trig pin will have pulses output
   pinMode(echoPin1, INPUT);         // echo pin should be input to get pulse width
@@ -78,7 +75,7 @@ void setup() {
 }
 
 void loop() {
-    getHeartRate();
+  getHeartRate();
   if (requestData) {
     collectSensorData();
     if (!radio.write(&sensorData, sizeof(SensorData))) {
@@ -86,12 +83,13 @@ void loop() {
     } else {
       Serial.println("data sent.");
     }
-    Serial.print("PM2.5: ");
-    Serial.println(sensorData.AQIData);
+
     Serial.print("Photoresistor: ");
     Serial.println(sensorData.photoData);
     Serial.print("BPM : ");
     Serial.println(sensorData.BPM);
+    Serial.print("Temperature: ");
+    Serial.println(sensorData.temperatureData);
     Serial.print("Distance: ");
     Serial.print(sensorData.USDistance_Front);
     Serial.print(", ");
@@ -117,26 +115,28 @@ void loop() {
 }
 
 void collectSensorData() {
-  getAQISensor();
   getPhotoresistor();
+  getTemperature();
   
   getUltrasonic(trigPin1, echoPin1, 1);
   getUltrasonic(trigPin2, echoPin2, 2);
   getUltrasonic(trigPin3, echoPin3, 3);
 }
 
-void getAQISensor() {
-  PM25_AQI_Data aqidata;
-  //Serial.println("AQI reading success");
-  //Serial.print(F("Particles > 2.5um / 0.1L air:")); Serial.println(aqidata.particles_25um);
-  sensorData.AQIData = aqidata.particles_25um;
-  
-}
-
 void getPhotoresistor() {
   photoresistor = analogRead(A0);   //set photoresistor to a number between 0 and 1023 based on how bright the ambient light is
   sensorData.photoData = photoresistor;
 }
+
+
+void getTemperature() {
+  int tempSensor = analogRead(A1);    //temperature sensor at A1
+  float voltage = (tempSensor / 1024.0) * 5.0;
+  float tempC = (voltage - .5) * 100;
+  float tempF = (tempC * 1.8) + 32;
+  sensorData.temperatureData = tempF;
+}
+
 
 void getUltrasonic(int trigPin, int echoPin, int ultrasonicNum) {
   // Duration will be the input pulse width and distance will be the distance to the obstacle in centimeters
@@ -163,7 +163,7 @@ void getUltrasonic(int trigPin, int echoPin, int ultrasonicNum) {
 
 void getHeartRate(){
   int myBPM = pulseSensor.getBeatsPerMinute();  // Calls function on our pulseSensor object that returns BPM as an "int".
-  sensorData.BPM = myBPM;                                               // "myBPM" hold this BPM value now. 
+  sensorData.BPM = myBPM;                       // "myBPM" hold this BPM value now. 
   if (pulseSensor.sawStartOfBeat()) { 
    sensorData.BPM = myBPM;                       // Print the value inside of myBPM.
   }

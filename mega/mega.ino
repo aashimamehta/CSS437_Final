@@ -8,9 +8,9 @@
 
 // struct for data transfer between devices
 struct SensorData {
-  int AQIData;
   float photoData;
   int BPM;
+  float temperatureData;
   float USDistance_Front;
   float USDistance_Left;
   float USDistance_Right;
@@ -28,7 +28,7 @@ const int LEFT_MOTOR_PIN = 46;
 const int RIGHT_MOTOR_PIN = 48;
 
 const byte requestByte = 1;
-const String labelArray[] = {"PM2.5: ", "Photoresistor: ", "Heart Rate: ", "Front Distance: ", "Left Distance: ", "Right Distance: "};
+const String labelArray[] = {"Photoresistor: ", "Heart Rate: ", "Temperature: ", "Front Distance: ", "Left Distance: ", "Right Distance: "};
 
 
 int sensorToReport;
@@ -94,12 +94,12 @@ void loop() {
     interrupts();
     displayDataOnLCD(displayIndex);
 
-    Serial.print("PM2.5: ");
-    Serial.println(sensorData.AQIData);
     Serial.print("Photoresistor: ");
     Serial.println(sensorData.photoData);
     Serial.print("BPM : ");
     Serial.println(sensorData.BPM);
+    Serial.print("Temperature: ");
+    Serial.println(sensorData.temperatureData);
     Serial.print("Distance: ");
     Serial.print(sensorData.USDistance_Front);
     Serial.print(", ");
@@ -171,13 +171,12 @@ void loop() {
   //ON DEMAND SENSOR DATA COLLECTION
   if (toReport) {
 
-    Serial.print("PM2.5: ");
-    Serial.println(sensorData.AQIData);
     Serial.print("Photoresistor: ");
     Serial.println(sensorData.photoData);
     Serial.print("BPM: ");
     Serial.println(sensorData.BPM);
-
+    Serial.print("Temperature: ");
+    Serial.println(sensorData.temperatureData);
     Serial.print("Front Distance: ");
     Serial.println(sensorData.USDistance_Front);
     Serial.print("Left Distance: ");
@@ -205,13 +204,13 @@ void displayDataOnLCD(int index) {
   lcd.setCursor(0, 1);              //move the cursor to the first space of the bottom row
   switch (displayIndex) {
     case 0:
-      lcd.print(sensorData.AQIData);
-      break;
-    case 1:
       lcd.print(sensorData.photoData);
       break;
-    case 2:
+    case 1:
       lcd.print(sensorData.BPM);
+      break;
+    case 2:
+      lcd.print(sensorData.temperatureData);
       break;
     case 3:
       lcd.print(sensorData.USDistance_Front);
