@@ -3,7 +3,7 @@
 #include <RF24.h>
 
 #define REQUEST_HOLD_TIME 1000    // hold down the button this many milliseconds to request data
-#define ALERT_DISTANCE 50.0         // distance when buzzer and vibration motor will go off
+#define ALERT_DISTANCE 3.0       // distance when buzzer and vibration motor will go off
 
 
 // struct for data transfer between devices
@@ -22,7 +22,7 @@ const byte address[6] = "00001";
 LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 const int buttonPin = 2;   // Arduino pin connected to button's pin
 const int ledPin = 5;       // Arduino pin connected to button's pin
-const int buzzerPin = 4;    // Arduino pin connected to button's pin
+const int buzzerPin = 4;    // Arduino pin connected to buzzer's pin
 const int FRONT_MOTOR_PIN = 44;
 const int LEFT_MOTOR_PIN = 46;
 const int RIGHT_MOTOR_PIN = 48;
@@ -37,7 +37,7 @@ bool toRequest = false;
 unsigned long buttonDownTime = 0;
 unsigned long buttonUpTime = 0;
 bool buttonClick = false;
-int displayIndex = 0; //0 for AQI, 1 for photoresistor, 2 for distance
+int displayIndex = 0;     //0 for AQI, 1 for photoresistor, 2 for distance
 SensorData sensorData;
 bool buttonIsUp = true;
 bool indexChanged = false;

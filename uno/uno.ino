@@ -27,8 +27,8 @@ int photoresistor = 0;              //this variable will hold a value based on t
 int threshold = 500;                //if the photoresistor reading is below this value the the light will turn on
 
 // Define pins for ultrasonic and buzzer
-int const trigPin1 = 3;
-int const echoPin1 = 2;
+int const trigPin1 = 2;
+int const echoPin1 = 3;
 
 int const trigPin2 = 5;
 int const echoPin2 = 4;
@@ -130,11 +130,12 @@ void getPhotoresistor() {
 
 
 void getTemperature() {
-  int tempSensor = analogRead(A1);    //temperature sensor at A1
-  float voltage = (tempSensor / 1024.0) * 5.0;
-  float tempC = (voltage - .5) * 100;
-  float tempF = (tempC * 1.8) + 32;
-  sensorData.temperatureData = tempF;
+  float voltage = analogRead(A2) * 0.004882813;   //convert the analog reading, which varies from 0 to 1023, back to a voltage value from 0-5 volts
+  float degreesC = (voltage - 0.5) * 100.0;       //convert the voltage to a temperature in degrees Celsius
+  float degreesF = degreesC * (9.0 / 5.0) + 32.0; //convert the voltage to a temperature in degrees Fahrenheit
+  Serial.print("this is the degreeF");
+  Serial.println(degreesF);
+  sensorData.temperatureData = degreesF;
 }
 
 
