@@ -10,6 +10,7 @@
 struct SensorData {
   float photoData;
   int BPM;
+  int stepData;
   float temperatureData;
   float USDistance_Front;
   float USDistance_Left;
@@ -28,7 +29,7 @@ const int LEFT_MOTOR_PIN = 46;
 const int RIGHT_MOTOR_PIN = 48;
 
 const byte requestByte = 1;
-const String labelArray[] = {"Photoresistor: ", "Heart Rate: ", "Temperature: ", "Front Distance: ", "Left Distance: ", "Right Distance: "};
+const String labelArray[] = {"Photoresistor: ", "Heart Rate: ", "Step count: ", "Temperature: ", "Front Distance: ", "Left Distance: ", "Right Distance: "};
 
 
 int sensorToReport;
@@ -98,6 +99,8 @@ void loop() {
     Serial.println(sensorData.photoData);
     Serial.print("BPM : ");
     Serial.println(sensorData.BPM);
+    Serial.print("Steo count: ");
+    Serial.println(sensorData.stepData);
     Serial.print("Temperature: ");
     Serial.println(sensorData.temperatureData);
     Serial.print("Distance: ");
@@ -175,6 +178,8 @@ void loop() {
     Serial.println(sensorData.photoData);
     Serial.print("BPM: ");
     Serial.println(sensorData.BPM);
+    Serial.print("Step count: ");
+    Serial.println(sensorData.stepData);
     Serial.print("Temperature: ");
     Serial.println(sensorData.temperatureData);
     Serial.print("Front Distance: ");
@@ -183,7 +188,6 @@ void loop() {
     Serial.println(sensorData.USDistance_Left);
     Serial.print("Right Distance: ");
     Serial.println(sensorData.USDistance_Right);
-
 
     toReport = false;
   }
@@ -210,15 +214,18 @@ void displayDataOnLCD(int index) {
       lcd.print(sensorData.BPM);
       break;
     case 2:
-      lcd.print(sensorData.temperatureData);
+      lcd.print(sensorData.stepData);
       break;
     case 3:
-      lcd.print(sensorData.USDistance_Front);
+      lcd.print(sensorData.temperatureData);
       break;
     case 4:
-      lcd.print(sensorData.USDistance_Left);
+      lcd.print(sensorData.USDistance_Front);
       break;
     case 5:
+      lcd.print(sensorData.USDistance_Left);
+      break;
+    case 6:
       lcd.print(sensorData.USDistance_Right);
       break;
   }

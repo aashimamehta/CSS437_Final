@@ -1,8 +1,9 @@
 /* Test sketch for Adafruit PM2.5 sensor with UART or I2C */
 #define USE_ARDUINO_INTERRUPTS true    // Set-up low-level interrupts for most acurate BPM math. HRS
 
-//#include "Adafruit_PM25AQI.h"
-#include <SPI.h>
+#include <Adafruit_LSM303_Accel.h>
+#include <Adafruit_Sensor.h>
+#include <Wire.h>
 #include <nRF24L01.h>
 #include <RF24.h>
 #include <PulseSensorPlayground.h>
@@ -13,6 +14,7 @@
 struct SensorData {
   float photoData;
   int BPM;
+  int stepData;
   float temperatureData;
   float USDistance_Front;
   float USDistance_Left;
@@ -42,6 +44,16 @@ unsigned long lastCheckTime = 0;
 unsigned long lastHeartBeat;
 
 
+/* Assign a unique ID to this sensor at the same time */
+Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(54321);
+float thresholdStep = 15;
+int stepCount = 0;
+/* Get a new sensor event */
+sensors_event_t event;
+float prevX = event.acceleration.x;
+float prevY = event.acceleration.y;
+float prevZ = event.acceleration.z;
+
 PulseSensorPlayground pulseSensor;  // Creates an instance of the PulseSensorPlayground object called "pulseSensor"
 
 //  Variables for Pulse 
@@ -50,6 +62,8 @@ const int PulseWire = 1;       // PulseSensor PURPLE WIRE connected to ANALOG PI
 int Threshold = 348;           // Determine which Signal to "count as a beat" and which to ignore.
                                // Use the "Gettting Started Project" to fine-tune Threshold Value beyond default setting.
                                // Otherwise leave the default "550" value. 
+
+
 
 void setup() {
   // Wait for serial monitor to open
@@ -68,14 +82,26 @@ void setup() {
     Serial.println("We created a pulseSensor Object !");  //This prints one time at Arduino power-up,  or on Arduino reset.  
   }
 
+    /* Initialise the sensor */
+  if (!accel.begin()) {
+    /* There was a problem detecting the ADXL345 ... check your connections */
+    Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
+    delay(2000);
+      ;
+  }
+  accel.getEvent(&event);
+
   radio.begin();
   radio.openWritingPipe(address);   //Setting the address at which we will receive the data
   radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
   radio.stopListening();
+
+  
 }
 
 void loop() {
   getHeartRate();
+  accel.getEvent(&event);
   if (requestData) {
     collectSensorData();
     if (!radio.write(&sensorData, sizeof(SensorData))) {
@@ -88,7 +114,9 @@ void loop() {
     Serial.println(sensorData.photoData);
     Serial.print("BPM : ");
     Serial.println(sensorData.BPM);
-    Serial.print("Temperature: ");
+    Serial.print("Step count: ");
+    Serial.println(sensorData.stepData);
+    Serial.print("Temperature (in F): ");
     Serial.println(sensorData.temperatureData);
     Serial.print("Distance: ");
     Serial.print(sensorData.USDistance_Front);
@@ -117,10 +145,42 @@ void loop() {
 void collectSensorData() {
   getPhotoresistor();
   getTemperature();
+  getAccelerometerData();
   
   getUltrasonic(trigPin1, echoPin1, 1);
   getUltrasonic(trigPin2, echoPin2, 2);
   getUltrasonic(trigPin3, echoPin3, 3);
+}
+
+void getAccelerometerData(){
+
+  /* Display the results (acceleration is measured in m/s^2) */
+//  Serial.print("X: ");
+//  Serial.print(event.acceleration.x);
+//  Serial.print("  ");
+//  Serial.print("Y: ");
+//  Serial.print(event.acceleration.y);
+//  Serial.print("  ");
+//  Serial.print("Z: ");
+//  Serial.print(event.acceleration.z);
+//  Serial.print("  ");
+//  Serial.println("m/s^2");
+
+  if( prevX != event.acceleration.x && prevY != event.acceleration.y && prevZ != event.acceleration.z){
+    float maybeStepCount = abs(event.acceleration.x) + abs(event.acceleration.y) + abs(event.acceleration.z);
+    if(maybeStepCount >= thresholdStep){
+      stepCount++;
+    }
+//    Serial.print("Step count = ");
+//    Serial.println(stepCount);
+    prevX = event.acceleration.x;
+    prevY = event.acceleration.y;
+    prevZ = event.acceleration.z;
+  }
+  sensorData.stepData = stepCount;
+  /* Delay before the next sample */
+  delay(500);
+  
 }
 
 void getPhotoresistor() {
