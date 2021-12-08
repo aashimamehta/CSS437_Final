@@ -5,6 +5,7 @@
 #define REQUEST_HOLD_TIME 1000    // hold down the button this many milliseconds to request data
 #define ALERT_DISTANCE 3.0       // distance when buzzer and vibration motor will go off
 
+int msgRecievedCount = 0;
 
 // struct for data transfer between devices
 struct SensorData {
@@ -95,19 +96,33 @@ void loop() {
     interrupts();
     displayDataOnLCD(displayIndex);
 
-    Serial.print("Photoresistor: ");
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
+    Serial.print("  Photoresistor: ");
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
     Serial.println(sensorData.photoData);
-    Serial.print("BPM : ");
+    Serial.print("  BPM : ");
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
     Serial.println(sensorData.BPM);
-    Serial.print("Steo count: ");
+    Serial.print("  Step count: ");
     Serial.println(sensorData.stepData);
-    Serial.print("Temperature: ");
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
+    Serial.print("  Temperature: ");
     Serial.println(sensorData.temperatureData);
-    Serial.print("Distance: ");
-    Serial.print(sensorData.USDistance_Front);
-    Serial.print(", ");
-    Serial.print(sensorData.USDistance_Left);
-    Serial.print(", ");
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
+    Serial.print("  Distance Front : ");
+    Serial.println(sensorData.USDistance_Front);
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
+    Serial.print("  Distance Left : ");
+    Serial.println(sensorData.USDistance_Left);
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
+    Serial.print("  Distance Right: ");
     Serial.println(sensorData.USDistance_Right);
   }
 
@@ -123,7 +138,7 @@ void loop() {
     digitalWrite(ledPin, LOW);
   }
 
-  if (sensorData.USDistance_Front < ALERT_DISTANCE) {
+  if (sensorData.USDistance_Front < ALERT_DISTANCE && sensorData.USDistance_Front > 0) {
     isClose = true;
     frontIsClose = true;
     digitalWrite(FRONT_MOTOR_PIN, HIGH);
@@ -132,7 +147,7 @@ void loop() {
     digitalWrite(FRONT_MOTOR_PIN, LOW);
   }
 
-  if (sensorData.USDistance_Left < ALERT_DISTANCE) {
+  if (sensorData.USDistance_Left < ALERT_DISTANCE && sensorData.USDistance_Left > 0) {
     isClose = true;
     leftIsClose = true;
     digitalWrite(LEFT_MOTOR_PIN, HIGH);
@@ -141,7 +156,7 @@ void loop() {
     digitalWrite(LEFT_MOTOR_PIN, LOW);
   }
 
-  if (sensorData.USDistance_Right < ALERT_DISTANCE) {
+  if (sensorData.USDistance_Right < ALERT_DISTANCE && sensorData.USDistance_Right > 0) {
     isClose = true;
     rightIsClose = true;
     digitalWrite(RIGHT_MOTOR_PIN, HIGH);
@@ -244,7 +259,7 @@ void buttonChange() {
       toRequest = true;
     } else {
       ++displayIndex;
-      if (displayIndex > 5) {
+      if (displayIndex > 6) {
         displayIndex = 0;
       }
       indexChanged = true;

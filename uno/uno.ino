@@ -129,7 +129,7 @@ void loop() {
   } else {
     unsigned long currentTime = millis();
     // if it's been 1000ms since last checked sensors
-    if ((currentTime - lastCheckTime) >= 2000) {
+    if ((currentTime - lastCheckTime) >= 1000) {
       requestData = true;
       lastCheckTime = currentTime;
     }
