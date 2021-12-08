@@ -99,27 +99,37 @@ void loop() {
     Serial.print("Message Recieved Count: ");
     Serial.print(msgRecievedCount++);
     Serial.print("  Photoresistor: ");
-    Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
     Serial.println(sensorData.photoData);
-    Serial.print("  BPM : ");
+    
     Serial.print("Message Recieved Count: ");
     Serial.print(msgRecievedCount++);
+    Serial.print("  BPM : ");
     Serial.println(sensorData.BPM);
+    
+    Serial.print("Message Recieved Count: ");
+    Serial.print(msgRecievedCount++);
     Serial.print("  Step count: ");
     Serial.println(sensorData.stepData);
+
+
     Serial.print("Message Recieved Count: ");
     Serial.print(msgRecievedCount++);
     Serial.print("  Temperature: ");
     Serial.println(sensorData.temperatureData);
+
+    
     Serial.print("Message Recieved Count: ");
     Serial.print(msgRecievedCount++);
     Serial.print("  Distance Front : ");
     Serial.println(sensorData.USDistance_Front);
+
+    
     Serial.print("Message Recieved Count: ");
     Serial.print(msgRecievedCount++);
     Serial.print("  Distance Left : ");
     Serial.println(sensorData.USDistance_Left);
+
+    
     Serial.print("Message Recieved Count: ");
     Serial.print(msgRecievedCount++);
     Serial.print("  Distance Right: ");
