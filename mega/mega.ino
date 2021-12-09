@@ -73,6 +73,13 @@ void setup() {
 
 void loop() {
 
+  // if keyboard inputs d or D, request new data
+  if (Serial.available()) {
+    char inputChar = Serial.read();
+    if (inputChar == 'd' || inputChar == 'D') {
+      toRequest = true;
+    }
+  }
 
   if (toRequest) {                          // request new data from peripheral
     Serial.println("requesting..");
@@ -97,43 +104,30 @@ void loop() {
     displayDataOnLCD(displayIndex);
 
     Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
+    Serial.println(msgRecievedCount++);
+
     Serial.print("  Photoresistor: ");
     Serial.println(sensorData.photoData);
-    
-    Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
+
     Serial.print("  BPM : ");
     Serial.println(sensorData.BPM);
-    
-    Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
+
     Serial.print("  Step count: ");
     Serial.println(sensorData.stepData);
 
-
-    Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
     Serial.print("  Temperature: ");
     Serial.println(sensorData.temperatureData);
 
-    
-    Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
     Serial.print("  Distance Front : ");
     Serial.println(sensorData.USDistance_Front);
 
-    
-    Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
     Serial.print("  Distance Left : ");
     Serial.println(sensorData.USDistance_Left);
 
-    
-    Serial.print("Message Recieved Count: ");
-    Serial.print(msgRecievedCount++);
     Serial.print("  Distance Right: ");
     Serial.println(sensorData.USDistance_Right);
+
+    Serial.println("");
   }
 
   if (sensorData.photoData < 500) {
@@ -179,8 +173,6 @@ void loop() {
     isClose = false;
   }
   
-  
-
   if(isClose) {
     digitalWrite(buzzerPin, HIGH);
   } else {
@@ -193,8 +185,6 @@ void loop() {
     //processButtonEvent();
     buttonClick = false;
   }
-
-  //Serial.println(labelArray[displayIndex]);
 
   //ON DEMAND SENSOR DATA COLLECTION
   if (toReport) {
